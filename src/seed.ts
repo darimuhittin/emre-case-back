@@ -32,7 +32,9 @@ async function bootstrap() {
   // Seed categories
   const categories = Array.from({ length: 5 }, () => {
     const name = faker.commerce.department();
-    const slug = faker.helpers.slugify(name + ' ' + faker.number.int({ min: 1, max: 1000 }));
+    const slug = faker.helpers.slugify(
+      name + ' ' + faker.number.int({ min: 1, max: 1000 }),
+    );
     return {
       name,
       description: faker.lorem.sentence(),
@@ -55,7 +57,9 @@ async function bootstrap() {
   // Seed provinces
   const provinces = Array.from({ length: 5 }, () => {
     const name = faker.address.state();
-    const slug = faker.helpers.slugify(name + ' ' + faker.number.int({ min: 1, max: 1000 }));
+    const slug = faker.helpers.slugify(
+      name + ' ' + faker.number.int({ min: 1, max: 1000 }),
+    );
     return {
       name,
       slug,
@@ -75,38 +79,33 @@ async function bootstrap() {
   }
 
   // Seed districts
-  const districts = Array.from({ length: 10 }, () => {
-    const name = faker.address.city();
-    const slug = faker.helpers.slugify(name + ' ' + faker.number.int({ min: 1, max: 1000 }));
-    return {
-      name,
-      slug,
-      provinceName: faker.helpers.arrayElement(provinces).name,
-    };
+  const allProvinces = await provincesRepository.find({
+    relations: ['districts'],
   });
-
-  for (const districtData of districts) {
-    const existingDistrict = await districtsRepository.findOne({
-      where: { name: districtData.name },
-      relations: ['province'],
+  for (const province of allProvinces) {
+    const districts = Array.from({ length: 10 }, () => {
+      const name = faker.address.city();
+      const slug = faker.helpers.slugify(
+        name + ' ' + faker.number.int({ min: 1, max: 1000 }),
+      );
+      return {
+        name,
+        slug,
+        province,
+      };
     });
-
-    if (!existingDistrict) {
-      const province = await provincesRepository.findOne({
-        where: { name: districtData.provinceName },
+    for (const districtData of districts) {
+      const existingDistrict = await districtsRepository.findOne({
+        where: { name: districtData.name },
       });
-
-      if (province) {
-        const district = districtsRepository.create({
-          name: districtData.name,
-          province,
-          slug: districtData.slug,
-        });
+      if (!existingDistrict) {
+        const district = districtsRepository.create(districtData);
         await districtsRepository.save(district);
-        console.log(`Created district: ${district.name} in ${province.name}`);
+        console.log(`Created district: ${district.name}`);
       }
     }
   }
+
   // Seed users
   const users = Array.from({ length: 10 }, () => ({
     name: faker.person.fullName(),
@@ -128,11 +127,16 @@ async function bootstrap() {
 
   const allUsers = await usersRepository.find();
   const allCategories = await categoriesRepository.find();
-  const allDistricts = await districtsRepository.find();
+  const allProvincesFilled = await provincesRepository.find({
+    relations: ['districts'],
+  });
 
-  console.log(allUsers, allCategories, allDistricts);
   // Seed listings
   const listings = Array.from({ length: 980 }, () => {
+    console.log('allProvinces : ', allProvincesFilled);
+    const province = faker.helpers.arrayElement(allProvincesFilled);
+    console.log('province : ', province);
+    const district = faker.helpers.arrayElement(province.districts);
     const title = faker.commerce.productName();
     const slug = faker.helpers.slugify(title);
 
@@ -148,7 +152,8 @@ async function bootstrap() {
       ),
       user: faker.helpers.arrayElement(allUsers),
       category: faker.helpers.arrayElement(allCategories),
-      district: faker.helpers.arrayElement(allDistricts),
+      province,
+      district,
       slug,
     };
   });

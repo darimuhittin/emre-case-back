@@ -25,7 +25,7 @@ export class ListingsService {
     private listingsRepository: Repository<Listing>,
     private categoriesService: CategoriesService,
     private locationsService: LocationsService,
-  ) { }
+  ) {}
 
   async create(
     createListingDto: CreateListingDto,
@@ -37,6 +37,9 @@ export class ListingsService {
     );
     const district = await this.locationsService.findDistrictById(
       createListingDto.districtId,
+    );
+    const province = await this.locationsService.findProvinceById(
+      createListingDto.provinceId,
     );
 
     let slug = faker.helpers.slugify(createListingDto.title);
@@ -59,6 +62,7 @@ export class ListingsService {
       user,
       category,
       district,
+      province,
       slug,
       images: newImages?.map((image) => `real:${image.filename}`),
     });
@@ -123,7 +127,7 @@ export class ListingsService {
 
     const [items, total] = await this.listingsRepository.findAndCount({
       where: where,
-      relations: ['user', 'category', 'district', 'district.province'],
+      relations: ['user', 'category', 'district', 'province'],
       skip,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -180,6 +184,14 @@ export class ListingsService {
       );
       listing.district = district;
     }
+
+    if (updateListingDto.provinceId) {
+      const province = await this.locationsService.findProvinceById(
+        updateListingDto.provinceId,
+      );
+      listing.province = province;
+    }
+
     let newImages = [...listing.images];
     if (files) {
       const newUrls = files.map((file) => `real:${file.filename}`);
@@ -198,7 +210,10 @@ export class ListingsService {
           });
         }
       }
-      console.log('delete images : ', updateListingDto.imagesToDelete.split(','));
+      console.log(
+        'delete images : ',
+        updateListingDto.imagesToDelete.split(','),
+      );
       newImages = newImages.filter(
         (image) => !updateListingDto.imagesToDelete.split(',').includes(image),
       );

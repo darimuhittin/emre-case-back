@@ -9,7 +9,7 @@ import {
 import { User } from '../../users/entities/user.entity';
 import { Category } from '../../categories/entities/category.entity';
 import { District } from '../../locations/entities/district.entity';
-
+import { Province } from '../../locations/entities/province.entity';
 @Entity()
 export class Listing {
   @PrimaryGeneratedColumn('uuid')
@@ -41,6 +41,9 @@ export class Listing {
 
   @ManyToOne(() => District, (district) => district.listings)
   district: District;
+
+  @ManyToOne(() => Province, (province) => province.listings)
+  province: Province;
 
   @CreateDateColumn()
   createdAt: Date;

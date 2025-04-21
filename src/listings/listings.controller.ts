@@ -27,7 +27,7 @@ import { User } from '../users/entities/user.entity';
 
 @Controller('listings')
 export class ListingsController {
-  constructor(private readonly listingsService: ListingsService) { }
+  constructor(private readonly listingsService: ListingsService) {}
 
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
@@ -42,11 +42,19 @@ export class ListingsController {
     }),
   )
   @Post()
-  create(@Body() createListingDto: CreateListingDto, @Req() req: Request, @UploadedFiles() newImages: Express.Multer.File[]) {
+  create(
+    @Body() createListingDto: CreateListingDto,
+    @Req() req: Request,
+    @UploadedFiles() newImages: Express.Multer.File[],
+  ) {
     const user = req.user as { id: string };
-    return this.listingsService.create(createListingDto, {
-      id: user.id,
-    } as any, newImages);
+    return this.listingsService.create(
+      createListingDto,
+      {
+        id: user.id,
+      } as any,
+      newImages,
+    );
   }
 
   @Get('my')

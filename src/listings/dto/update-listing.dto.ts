@@ -30,6 +30,10 @@ export class UpdateListingDto {
   districtId?: string;
 
   @IsOptional()
+  @IsUUID()
+  provinceId?: string;
+
+  @IsOptional()
   @IsString()
   imagesToDelete?: string;
 }
