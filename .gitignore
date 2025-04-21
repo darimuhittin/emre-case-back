@@ -1,0 +1,11 @@
+# Docker
+docker-compose.override.yml
+
+# Database volume data
+postgres_data/
+
+# Uploads
+uploads/*
+!uploads/.gitkeep 
+node_modules
+dist
